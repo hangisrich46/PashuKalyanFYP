@@ -1,9 +1,20 @@
 "use client"
+import axios from 'axios';  // Add this line
 
 import { useState } from "react"
+import "../styles/AdminDashboard.css"
+import AddAnimalForm from "../components/AddAnimalForm"  // Import correctly with 'from'
 
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState("dashboard")
+  const [showForm, setShowForm] = useState(false);
+  const [animals, setAnimals] = useState([
+    { id: 1, name: "Buddy", type: "Dog", age: "2 years", gender: "Male", status: "Available" },
+    { id: 2, name: "Luna", type: "Dog", age: "1 year", gender: "Female", status: "Adopted" },
+    { id: 3, name: "Max", type: "Dog", age: "3 years", gender: "Male", status: "Available" },
+    { id: 4, name: "Whiskers", type: "Cat", age: "4 years", gender: "Female", status: "Available" },
+    { id: 5, name: "Rocky", type: "Dog", age: "5 years", gender: "Male", status: "Pending Adoption" },
+  ]);
 
   // Sample data for demonstration
   const stats = {
@@ -21,14 +32,6 @@ const AdminDashboard = () => {
     { id: 5, name: "Michael Wilson", email: "michael@example.com", role: "User", joinDate: "2023-08-12" },
   ]
 
-  const animals = [
-    { id: 1, name: "Buddy", type: "Dog", age: "2 years", gender: "Male", status: "Available" },
-    { id: 2, name: "Luna", type: "Dog", age: "1 year", gender: "Female", status: "Adopted" },
-    { id: 3, name: "Max", type: "Dog", age: "3 years", gender: "Male", status: "Available" },
-    { id: 4, name: "Whiskers", type: "Cat", age: "4 years", gender: "Female", status: "Available" },
-    { id: 5, name: "Rocky", type: "Dog", age: "5 years", gender: "Male", status: "Pending Adoption" },
-  ]
-
   const applications = [
     { id: 1, user: "John Doe", animal: "Buddy", date: "2023-09-15", status: "Pending" },
     { id: 2, user: "Jane Smith", animal: "Luna", date: "2023-08-22", status: "Approved" },
@@ -37,222 +40,73 @@ const AdminDashboard = () => {
     { id: 5, user: "Sarah Brown", animal: "Rocky", date: "2023-09-18", status: "Pending" },
   ]
 
-  // Styles
-  const styles = {
-    container: {
-      display: "flex",
-      minHeight: "calc(100vh - 64px)", // Adjust based on your navbar height
-      backgroundColor: "#f5f5f5",
-    },
-    sidebar: {
-      width: "250px",
-      backgroundColor: "#dfdbdb",
-      padding: "20px",
-      borderRight: "1px solid #bebebe",
-    },
-    sidebarTitle: {
-      fontSize: "1.5rem",
-      fontWeight: "bold",
-      marginBottom: "20px",
-      color: "#000000",
-    },
-    navItem: {
-      display: "flex",
-      alignItems: "center",
-      padding: "12px 16px",
-      marginBottom: "8px",
-      borderRadius: "4px",
-      cursor: "pointer",
-      transition: "background-color 0.3s",
-      color: "#000000",
-    },
-    activeNavItem: {
-      backgroundColor: "#212121",
-      color: "#ffffff",
-    },
-    navIcon: {
-      marginRight: "12px",
-    },
-    content: {
-      flex: 1,
-      padding: "20px",
-      overflowY: "auto",
-    },
-    header: {
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "center",
-      marginBottom: "24px",
-    },
-    title: {
-      fontSize: "1.8rem",
-      fontWeight: "bold",
-      color: "#000000",
-    },
-    statsContainer: {
-      display: "grid",
-      gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
-      gap: "16px",
-      marginBottom: "24px",
-    },
-    statCard: {
-      backgroundColor: "#ffffff",
-      borderRadius: "8px",
-      padding: "16px",
-      boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
-    },
-    statTitle: {
-      fontSize: "0.875rem",
-      color: "#757575",
-      marginBottom: "8px",
-    },
-    statValue: {
-      fontSize: "1.5rem",
-      fontWeight: "bold",
-      color: "#000000",
-    },
-    table: {
-      width: "100%",
-      backgroundColor: "#ffffff",
-      borderRadius: "8px",
-      overflow: "hidden",
-      boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
-    },
-    tableHeader: {
-      backgroundColor: "#f0f0f0",
-      padding: "12px 16px",
-      textAlign: "left",
-      fontWeight: "bold",
-      color: "#000000",
-      borderBottom: "1px solid #e0e0e0",
-    },
-    tableRow: {
-      borderBottom: "1px solid #e0e0e0",
-    },
-    tableCell: {
-      padding: "12px 16px",
-      color: "#424242",
-    },
-    button: {
-      backgroundColor: "#212121",
-      color: "#ffffff",
-      border: "none",
-      borderRadius: "4px",
-      padding: "8px 16px",
-      cursor: "pointer",
-      transition: "background-color 0.3s",
-    },
-    buttonOutline: {
-      backgroundColor: "transparent",
-      color: "#212121",
-      border: "1px solid #212121",
-      borderRadius: "4px",
-      padding: "8px 16px",
-      cursor: "pointer",
-      transition: "background-color 0.3s",
-    },
-    statusBadge: {
-      padding: "4px 8px",
-      borderRadius: "4px",
-      fontSize: "0.75rem",
-      fontWeight: "bold",
-    },
-    pendingBadge: {
-      backgroundColor: "#fff8e1",
-      color: "#f57c00",
-    },
-    approvedBadge: {
-      backgroundColor: "#e8f5e9",
-      color: "#2e7d32",
-    },
-    rejectedBadge: {
-      backgroundColor: "#ffebee",
-      color: "#c62828",
-    },
-    availableBadge: {
-      backgroundColor: "#e8f5e9",
-      color: "#2e7d32",
-    },
-    adoptedBadge: {
-      backgroundColor: "#e0f7fa",
-      color: "#0277bd",
-    },
-    actionButton: {
-      backgroundColor: "transparent",
-      border: "none",
-      cursor: "pointer",
-      color: "#212121",
-      marginRight: "8px",
-    },
-  }
-
-  // Render status badge with appropriate color
+  // Render status badge with appropriate class
   const renderStatusBadge = (status) => {
-    let badgeStyle = { ...styles.statusBadge }
+    let badgeClass = "status-badge"
 
     if (status === "Pending") {
-      badgeStyle = { ...badgeStyle, ...styles.pendingBadge }
+      badgeClass += " pending-badge"
     } else if (status === "Approved") {
-      badgeStyle = { ...badgeStyle, ...styles.approvedBadge }
+      badgeClass += " approved-badge"
     } else if (status === "Rejected") {
-      badgeStyle = { ...badgeStyle, ...styles.rejectedBadge }
+      badgeClass += " rejected-badge"
     } else if (status === "Available") {
-      badgeStyle = { ...badgeStyle, ...styles.availableBadge }
+      badgeClass += " available-badge"
     } else if (status === "Adopted" || status === "Pending Adoption") {
-      badgeStyle = { ...badgeStyle, ...styles.adoptedBadge }
+      badgeClass += " adopted-badge"
     }
 
-    return <span style={badgeStyle}>{status}</span>
+    return <span className={badgeClass}>{status}</span>
   }
 
   // Render dashboard content
   const renderDashboard = () => (
     <div>
-      <div style={styles.header}>
-        <h1 style={styles.title}>Dashboard Overview</h1>
+      <div className="content-header">
+        <h1 className="content-title">Dashboard View</h1>
       </div>
 
-      <div style={styles.statsContainer}>
-        <div style={styles.statCard}>
-          <div style={styles.statTitle}>TOTAL USERS</div>
-          <div style={styles.statValue}>{stats.totalUsers}</div>
+      <div className="stats-container">
+        <div className="stat-card">
+          <div className="stat-title">TOTAL USERS</div>
+          <div className="stat-value">{stats.totalUsers}</div>
         </div>
-        <div style={styles.statCard}>
-          <div style={styles.statTitle}>TOTAL ANIMALS</div>
-          <div style={styles.statValue}>{stats.totalAnimals}</div>
+        <div className="stat-card">
+          <div className="stat-title">TOTAL ANIMALS</div>
+          <div className="stat-value">{stats.totalAnimals}</div>
         </div>
-        <div style={styles.statCard}>
-          <div style={styles.statTitle}>PENDING APPLICATIONS</div>
-          <div style={styles.statValue}>{stats.pendingApplications}</div>
+        <div className="stat-card">
+          <div className="stat-title">PENDING APPLICATIONS</div>
+          <div className="stat-value">{stats.pendingApplications}</div>
         </div>
-        <div style={styles.statCard}>
-          <div style={styles.statTitle}>APPROVED APPLICATIONS</div>
-          <div style={styles.statValue}>{stats.approvedApplications}</div>
+        <div className="stat-card">
+          <div className="stat-title">APPROVED APPLICATIONS</div>
+          <div className="stat-value">{stats.approvedApplications}</div>
         </div>
       </div>
 
-      <div style={styles.header}>
-        <h2 style={{ ...styles.title, fontSize: "1.4rem" }}>Recent Applications</h2>
+      <div className="content-header">
+        <h2 className="content-subtitle">Recent Applications</h2>
       </div>
 
-      <table style={styles.table}>
+      <table className="admin-table">
         <thead>
           <tr>
-            <th style={styles.tableHeader}>ID</th>
-            <th style={styles.tableHeader}>User</th>
-            <th style={styles.tableHeader}>Animal</th>
-            <th style={styles.tableHeader}>Date</th>
-            <th style={styles.tableHeader}>Status</th>
+            <th className="table-header">ID</th>
+            <th className="table-header">User</th>
+            <th className="table-header">Animal</th>
+            <th className="table-header">Date</th>
+            <th className="table-header">Status</th>
           </tr>
         </thead>
         <tbody>
           {applications.slice(0, 3).map((app) => (
-            <tr key={app.id} style={styles.tableRow}>
-              <td style={styles.tableCell}>{app.id}</td>
-              <td style={styles.tableCell}>{app.user}</td>
-              <td style={styles.tableCell}>{app.animal}</td>
-              <td style={styles.tableCell}>{app.date}</td>
-              <td style={styles.tableCell}>{renderStatusBadge(app.status)}</td>
+            <tr key={app.id} className="table-row">
+              <td className="table-cell">{app.id}</td>
+              <td className="table-cell">{app.user}</td>
+              <td className="table-cell">{app.animal}</td>
+              <td className="table-cell">{app.date}</td>
+              <td className="table-cell">{renderStatusBadge(app.status)}</td>
             </tr>
           ))}
         </tbody>
@@ -263,32 +117,32 @@ const AdminDashboard = () => {
   // Render users content
   const renderUsers = () => (
     <div>
-      <div style={styles.header}>
-        <h1 style={styles.title}>User Management</h1>
-        <button style={styles.button}>Add New User</button>
+      <div className="content-header">
+        <h1 className="content-title">User Management</h1>
+        <button className="admin-button">Add New User</button>
       </div>
 
-      <table style={styles.table}>
+      <table className="admin-table">
         <thead>
           <tr>
-            <th style={styles.tableHeader}>ID</th>
-            <th style={styles.tableHeader}>Name</th>
-            <th style={styles.tableHeader}>Email</th>
-            <th style={styles.tableHeader}>Role</th>
-            <th style={styles.tableHeader}>Join Date</th>
-            <th style={styles.tableHeader}>Actions</th>
+            <th className="table-header">ID</th>
+            <th className="table-header">Name</th>
+            <th className="table-header">Email</th>
+            <th className="table-header">Role</th>
+            <th className="table-header">Join Date</th>
+            <th className="table-header">Actions</th>
           </tr>
         </thead>
         <tbody>
           {users.map((user) => (
-            <tr key={user.id} style={styles.tableRow}>
-              <td style={styles.tableCell}>{user.id}</td>
-              <td style={styles.tableCell}>{user.name}</td>
-              <td style={styles.tableCell}>{user.email}</td>
-              <td style={styles.tableCell}>{user.role}</td>
-              <td style={styles.tableCell}>{user.joinDate}</td>
-              <td style={styles.tableCell}>
-                <button style={styles.actionButton} title="Edit">
+            <tr key={user.id} className="table-row">
+              <td className="table-cell">{user.id}</td>
+              <td className="table-cell">{user.name}</td>
+              <td className="table-cell">{user.email}</td>
+              <td className="table-cell">{user.role}</td>
+              <td className="table-cell">{user.joinDate}</td>
+              <td className="table-cell">
+                <button className="action-button" title="Edit">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     width="18"
@@ -304,7 +158,7 @@ const AdminDashboard = () => {
                     <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                   </svg>
                 </button>
-                <button style={styles.actionButton} title="Delete">
+                <button className="action-button" title="Delete">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     width="18"
@@ -330,122 +184,107 @@ const AdminDashboard = () => {
     </div>
   )
 
-  // Render animals content
+  //Render animal 
+  const handleAddAnimal = async (formData) => {
+    try {
+      // Send the FormData to your backend API
+      const response = await axios.post("http://localhost:8080/api/animals", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data", // Set the header for file uploads
+        },
+      });
+
+      console.log("Animal added successfully:", response.data);
+      setShowForm(false); // Close the form after successful submission
+      // Add more logic here (e.g., show success message or refresh animal list)
+    } catch (error) {
+      console.error("Error adding animal:", error);
+      // Handle error (e.g., show error message)
+    }
+  };
+
   const renderAnimals = () => (
     <div>
-      <div style={styles.header}>
-        <h1 style={styles.title}>Animal Listings</h1>
-        <button style={styles.button}>Add New Animal</button>
+      <div className="content-header">
+        <h1 className="content-title">Animal Listings</h1>
+        <button
+          className="admin-button bg-blue-500 text-white px-4 py-2 rounded"
+          onClick={() => setShowForm(true)}
+        >
+          Add New Animal
+        </button>
       </div>
 
-      <table style={styles.table}>
+      {showForm && (
+        <AddAnimalForm
+          onSubmit={handleAddAnimal}
+          onCancel={() => setShowForm(false)}
+        />
+      )}
+
+      <table className="admin-table mt-6">
         <thead>
           <tr>
-            <th style={styles.tableHeader}>ID</th>
-            <th style={styles.tableHeader}>Name</th>
-            <th style={styles.tableHeader}>Type</th>
-            <th style={styles.tableHeader}>Age</th>
-            <th style={styles.tableHeader}>Gender</th>
-            <th style={styles.tableHeader}>Status</th>
-            <th style={styles.tableHeader}>Actions</th>
+            <th className="table-header">ID</th>
+            <th className="table-header">Name</th>
+            <th className="table-header">Type</th>
+            <th className="table-header">Age</th>
+            <th className="table-header">Gender</th>
+            <th className="table-header">Status</th>
+            <th className="table-header">Actions</th>
+            <th className="table-header">Description</th>
           </tr>
         </thead>
         <tbody>
           {animals.map((animal) => (
-            <tr key={animal.id} style={styles.tableRow}>
-              <td style={styles.tableCell}>{animal.id}</td>
-              <td style={styles.tableCell}>{animal.name}</td>
-              <td style={styles.tableCell}>{animal.type}</td>
-              <td style={styles.tableCell}>{animal.age}</td>
-              <td style={styles.tableCell}>{animal.gender}</td>
-              <td style={styles.tableCell}>{renderStatusBadge(animal.status)}</td>
-              <td style={styles.tableCell}>
-                <button style={styles.actionButton} title="Edit">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                  </svg>
-                </button>
-                <button style={styles.actionButton} title="Delete">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <polyline points="3 6 5 6 21 6"></polyline>
-                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                    <line x1="10" y1="11" x2="10" y2="17"></line>
-                    <line x1="14" y1="11" x2="14" y2="17"></line>
-                  </svg>
-                </button>
-                <button style={styles.actionButton} title="View">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                    <circle cx="12" cy="12" r="3"></circle>
-                  </svg>
-                </button>
+            <tr key={animal.id} className="table-row">
+              <td className="table-cell">{animal.id}</td>
+              <td className="table-cell">{animal.name}</td>
+              <td className="table-cell">{animal.type}</td>
+              <td className="table-cell">{animal.age}</td>
+              <td className="table-cell">{animal.gender}</td>
+              <td className="table-cell">{renderStatusBadge(animal.status)}</td>
+              <td className="table-cell">
+                <button className="action-button" title="Edit">✏️</button>
+                <button className="action-button" title="Delete">🗑️</button>
+                <button className="action-button" title="View">👁️</button>
               </td>
+              <td className="table-cell">{animal.description}</td>
             </tr>
           ))}
         </tbody>
       </table>
     </div>
-  )
+  );
 
   // Render applications content
   const renderApplications = () => (
     <div>
-      <div style={styles.header}>
-        <h1 style={styles.title}>Adoption Applications</h1>
+      <div className="content-header">
+        <h1 className="content-title">Adoption Applications</h1>
       </div>
 
-      <table style={styles.table}>
+      <table className="admin-table">
         <thead>
           <tr>
-            <th style={styles.tableHeader}>ID</th>
-            <th style={styles.tableHeader}>User</th>
-            <th style={styles.tableHeader}>Animal</th>
-            <th style={styles.tableHeader}>Date</th>
-            <th style={styles.tableHeader}>Status</th>
-            <th style={styles.tableHeader}>Actions</th>
+            <th className="table-header">ID</th>
+            <th className="table-header">User</th>
+            <th className="table-header">Animal</th>
+            <th className="table-header">Date</th>
+            <th className="table-header">Status</th>
+            <th className="table-header">Actions</th>
           </tr>
         </thead>
         <tbody>
           {applications.map((app) => (
-            <tr key={app.id} style={styles.tableRow}>
-              <td style={styles.tableCell}>{app.id}</td>
-              <td style={styles.tableCell}>{app.user}</td>
-              <td style={styles.tableCell}>{app.animal}</td>
-              <td style={styles.tableCell}>{app.date}</td>
-              <td style={styles.tableCell}>{renderStatusBadge(app.status)}</td>
-              <td style={styles.tableCell}>
-                <button style={styles.actionButton} title="View">
+            <tr key={app.id} className="table-row">
+              <td className="table-cell">{app.id}</td>
+              <td className="table-cell">{app.user}</td>
+              <td className="table-cell">{app.animal}</td>
+              <td className="table-cell">{app.date}</td>
+              <td className="table-cell">{renderStatusBadge(app.status)}</td>
+              <td className="table-cell">
+                <button className="action-button" title="View">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     width="18"
@@ -463,7 +302,7 @@ const AdminDashboard = () => {
                 </button>
                 {app.status === "Pending" && (
                   <>
-                    <button style={styles.actionButton} title="Approve">
+                    <button className="action-button" title="Approve">
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
                         width="18"
@@ -478,7 +317,7 @@ const AdminDashboard = () => {
                         <polyline points="20 6 9 17 4 12"></polyline>
                       </svg>
                     </button>
-                    <button style={styles.actionButton} title="Reject">
+                    <button className="action-button" title="Reject">
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
                         width="18"
@@ -521,20 +360,17 @@ const AdminDashboard = () => {
   }
 
   return (
-    <div style={styles.container}>
+    <div className="admin-container">
       {/* Sidebar */}
-      <div style={styles.sidebar}>
-        <div style={styles.sidebarTitle}>Admin Panel</div>
+      <div className="admin-sidebar">
+        <div className="sidebar-title">Admin Panel</div>
 
         <div
-          style={{
-            ...styles.navItem,
-            ...(activeTab === "dashboard" ? styles.activeNavItem : {}),
-          }}
+          className={`nav-item ${activeTab === "dashboard" ? "active-nav-item" : ""}`}
           onClick={() => setActiveTab("dashboard")}
         >
           <svg
-            style={styles.navIcon}
+            className="nav-icon"
             xmlns="http://www.w3.org/2000/svg"
             width="20"
             height="20"
@@ -554,14 +390,11 @@ const AdminDashboard = () => {
         </div>
 
         <div
-          style={{
-            ...styles.navItem,
-            ...(activeTab === "users" ? styles.activeNavItem : {}),
-          }}
+          className={`nav-item ${activeTab === "users" ? "active-nav-item" : ""}`}
           onClick={() => setActiveTab("users")}
         >
           <svg
-            style={styles.navIcon}
+            className="nav-icon"
             xmlns="http://www.w3.org/2000/svg"
             width="20"
             height="20"
@@ -579,14 +412,11 @@ const AdminDashboard = () => {
         </div>
 
         <div
-          style={{
-            ...styles.navItem,
-            ...(activeTab === "animals" ? styles.activeNavItem : {}),
-          }}
+          className={`nav-item ${activeTab === "animals" ? "active-nav-item" : ""}`}
           onClick={() => setActiveTab("animals")}
         >
           <svg
-            style={styles.navIcon}
+            className="nav-icon"
             xmlns="http://www.w3.org/2000/svg"
             width="20"
             height="20"
@@ -608,14 +438,11 @@ const AdminDashboard = () => {
         </div>
 
         <div
-          style={{
-            ...styles.navItem,
-            ...(activeTab === "applications" ? styles.activeNavItem : {}),
-          }}
+          className={`nav-item ${activeTab === "applications" ? "active-nav-item" : ""}`}
           onClick={() => setActiveTab("applications")}
         >
           <svg
-            style={styles.navIcon}
+            className="nav-icon"
             xmlns="http://www.w3.org/2000/svg"
             width="20"
             height="20"
@@ -635,14 +462,9 @@ const AdminDashboard = () => {
           Applications
         </div>
 
-        <div
-          style={{
-            ...styles.navItem,
-            marginTop: "auto",
-          }}
-        >
+        <div className="nav-item logout-item">
           <svg
-            style={styles.navIcon}
+            className="nav-icon"
             xmlns="http://www.w3.org/2000/svg"
             width="20"
             height="20"
@@ -662,10 +484,9 @@ const AdminDashboard = () => {
       </div>
 
       {/* Main Content */}
-      <div style={styles.content}>{renderContent()}</div>
+      <div className="admin-content">{renderContent()}</div>
     </div>
   )
 }
 
-export default AdminDashboard
-
+export default AdminDashboard;
