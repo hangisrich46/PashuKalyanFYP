@@ -10,6 +10,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -50,6 +51,46 @@ public class AnimalController {
             Map<String, Object> response = new HashMap<>();
             response.put("success", Optional.of(false));  // Wrapping the value in Optional
             response.put("message", "Failed to create animal: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+    @GetMapping
+    public ResponseEntity<Map<String, Object>> getAllAnimals() {
+        try {
+            List<Animal> animals = animalService.getAllAnimals();
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", Optional.of(true));
+            response.put("data", animals);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", Optional.of(false));
+            response.put("message", "Failed to retrieve animals: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Map<String, Object>> getAnimalById(@PathVariable Long id) {
+        try {
+            Optional<Animal> animal = animalService.getAnimalById(id);
+
+            if (animal.isPresent()) {
+                Map<String, Object> response = new HashMap<>();
+                response.put("success", Optional.of(true));
+                response.put("data", animal.get());
+                return ResponseEntity.ok(response);
+            } else {
+                Map<String, Object> response = new HashMap<>();
+                response.put("success", Optional.of(false));
+                response.put("message", "Animal not found with id: " + id);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+            }
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", Optional.of(false));
+            response.put("message", "Failed to retrieve animal: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }

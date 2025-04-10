@@ -1,20 +1,14 @@
-"use client"
-import axios from 'axios';  // Add this line
-
-import { useState } from "react"
-import "../styles/AdminDashboard.css"
-import AddAnimalForm from "../components/AddAnimalForm"  // Import correctly with 'from'
+"use client";
+import axios from 'axios';  
+import { useState, useEffect } from "react";
+import "../styles/AdminDashboard.css";
+import AddAnimalForm from "../components/AddAnimalForm";
+import { fetchAllAnimals } from '../api.jsx'; // Now properly used
 
 const AdminDashboard = () => {
-  const [activeTab, setActiveTab] = useState("dashboard")
+  const [activeTab, setActiveTab] = useState("dashboard");
   const [showForm, setShowForm] = useState(false);
-  const [animals, setAnimals] = useState([
-    { id: 1, name: "Buddy", type: "Dog", age: "2 years", gender: "Male", status: "Available" },
-    { id: 2, name: "Luna", type: "Dog", age: "1 year", gender: "Female", status: "Adopted" },
-    { id: 3, name: "Max", type: "Dog", age: "3 years", gender: "Male", status: "Available" },
-    { id: 4, name: "Whiskers", type: "Cat", age: "4 years", gender: "Female", status: "Available" },
-    { id: 5, name: "Rocky", type: "Dog", age: "5 years", gender: "Male", status: "Pending Adoption" },
-  ]);
+  const [animals, setAnimals] = useState([]);
 
   // Sample data for demonstration
   const stats = {
@@ -22,7 +16,7 @@ const AdminDashboard = () => {
     totalAnimals: 57,
     pendingApplications: 18,
     approvedApplications: 42,
-  }
+  };
 
   const users = [
     { id: 1, name: "John Doe", email: "john@example.com", role: "User", joinDate: "2023-05-15" },
@@ -30,7 +24,7 @@ const AdminDashboard = () => {
     { id: 3, name: "Robert Johnson", email: "robert@example.com", role: "Admin", joinDate: "2023-04-10" },
     { id: 4, name: "Emily Davis", email: "emily@example.com", role: "User", joinDate: "2023-07-05" },
     { id: 5, name: "Michael Wilson", email: "michael@example.com", role: "User", joinDate: "2023-08-12" },
-  ]
+  ];
 
   const applications = [
     { id: 1, user: "John Doe", animal: "Buddy", date: "2023-09-15", status: "Pending" },
@@ -38,26 +32,77 @@ const AdminDashboard = () => {
     { id: 3, user: "Emily Davis", animal: "Max", date: "2023-09-05", status: "Pending" },
     { id: 4, user: "Michael Wilson", animal: "Whiskers", date: "2023-09-10", status: "Rejected" },
     { id: 5, user: "Sarah Brown", animal: "Rocky", date: "2023-09-18", status: "Pending" },
-  ]
+  ];
+
+  // Load animals from the backend
+ // Load animals from the backend with debugging
+const loadAnimals = async () => {
+  try {
+    const response = await fetchAllAnimals();
+    console.log("API Response:", response); // Debug entire response
+    
+    if (response && response.data) {
+      // Store the animals data
+      setAnimals(response.data);
+      
+      // Debug the first animal's date fields
+      if (response.data.length > 0) {
+        console.log("Sample animal data:", response.data[0]);
+        console.log("Created at (raw):", response.data[0].created_at);
+        console.log("Created at type:", typeof response.data[0].created_at);
+      }
+    } else {
+      console.error("Invalid response format:", response);
+    }
+  } catch (error) {
+    console.error("Error loading animals:", error);
+  }
+};
+
+
+
+  // Handle the form submission to add a new animal
+  const handleAddAnimal = async (formData) => {
+    try {
+      // Send the FormData to your backend API
+      const response = await axios.post("http://localhost:8080/api/animals", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data", // Set the header for file uploads
+        },
+      });
+
+      console.log("Animal added successfully:", response.data);
+      setShowForm(false); // Close the form after successful submission
+      await loadAnimals(); // Reload the animal list after adding a new animal
+    } catch (error) {
+      console.error("Error adding animal:", error);
+      // Handle error (e.g., show error message)
+    }
+  };
+
+  // Fetch animals when the component is mounted
+  useEffect(() => {
+    loadAnimals(); // Load animals on component mount
+  }, []);
 
   // Render status badge with appropriate class
   const renderStatusBadge = (status) => {
-    let badgeClass = "status-badge"
+    let badgeClass = "status-badge";
 
     if (status === "Pending") {
-      badgeClass += " pending-badge"
+      badgeClass += " pending-badge";
     } else if (status === "Approved") {
-      badgeClass += " approved-badge"
+      badgeClass += " approved-badge";
     } else if (status === "Rejected") {
-      badgeClass += " rejected-badge"
+      badgeClass += " rejected-badge";
     } else if (status === "Available") {
-      badgeClass += " available-badge"
+      badgeClass += " available-badge";
     } else if (status === "Adopted" || status === "Pending Adoption") {
-      badgeClass += " adopted-badge"
+      badgeClass += " adopted-badge";
     }
 
-    return <span className={badgeClass}>{status}</span>
-  }
+    return <span className={badgeClass}>{status}</span>;
+  };
 
   // Render dashboard content
   const renderDashboard = () => (
@@ -112,7 +157,7 @@ const AdminDashboard = () => {
         </tbody>
       </table>
     </div>
-  )
+  );
 
   // Render users content
   const renderUsers = () => (
@@ -182,80 +227,118 @@ const AdminDashboard = () => {
         </tbody>
       </table>
     </div>
-  )
+  );
 
-  //Render animal 
-  const handleAddAnimal = async (formData) => {
-    try {
-      // Send the FormData to your backend API
-      const response = await axios.post("http://localhost:8080/api/animals", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data", // Set the header for file uploads
-        },
-      });
+ // Render animals content
+const renderAnimals = () => (
+  <div>
+    <div className="content-header">
+      <h1 className="content-title">Animal Listings</h1>
+      <button
+        className="admin-button bg-blue-500 text-white px-4 py-2 rounded"
+        onClick={() => setShowForm(true)}
+      >
+        Add New Animal
+      </button>
+    </div>
 
-      console.log("Animal added successfully:", response.data);
-      setShowForm(false); // Close the form after successful submission
-      // Add more logic here (e.g., show success message or refresh animal list)
-    } catch (error) {
-      console.error("Error adding animal:", error);
-      // Handle error (e.g., show error message)
-    }
-  };
+    {showForm && (
+      <AddAnimalForm
+        onSubmit={handleAddAnimal}
+        onCancel={() => setShowForm(false)}
+      />
+    )}
 
-  const renderAnimals = () => (
-    <div>
-      <div className="content-header">
-        <h1 className="content-title">Animal Listings</h1>
-        <button
-          className="admin-button bg-blue-500 text-white px-4 py-2 rounded"
-          onClick={() => setShowForm(true)}
-        >
-          Add New Animal
-        </button>
-      </div>
-
-      {showForm && (
-        <AddAnimalForm
-          onSubmit={handleAddAnimal}
-          onCancel={() => setShowForm(false)}
-        />
-      )}
-
-      <table className="admin-table mt-6">
-        <thead>
-          <tr>
-            <th className="table-header">ID</th>
-            <th className="table-header">Name</th>
-            <th className="table-header">Type</th>
-            <th className="table-header">Age</th>
-            <th className="table-header">Gender</th>
-            <th className="table-header">Status</th>
-            <th className="table-header">Actions</th>
-            <th className="table-header">Description</th>
-          </tr>
-        </thead>
-        <tbody>
-          {animals.map((animal) => (
+    <table className="admin-table">
+      <thead>
+        <tr>
+          <th className="table-header">ID</th>
+          <th className="table-header">Name</th>
+          <th className="table-header">Age</th>
+          <th className="table-header">Gender</th>
+          <th className="table-header">Type</th>
+          <th className="table-header">Status</th>
+          <th className="table-header">Description</th>
+        
+          <th className="table-header">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {animals.length > 0 ? (
+          animals.map((animal) => (
             <tr key={animal.id} className="table-row">
               <td className="table-cell">{animal.id}</td>
               <td className="table-cell">{animal.name}</td>
-              <td className="table-cell">{animal.type}</td>
               <td className="table-cell">{animal.age}</td>
               <td className="table-cell">{animal.gender}</td>
+              <td className="table-cell">{animal.type}</td>
               <td className="table-cell">{renderStatusBadge(animal.status)}</td>
-              <td className="table-cell">
-                <button className="action-button" title="Edit">✏️</button>
-                <button className="action-button" title="Delete">🗑️</button>
-                <button className="action-button" title="View">👁️</button>
-              </td>
               <td className="table-cell">{animal.description}</td>
+             
+              <td className="table-cell">
+                <button className="action-button" title="View Details">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                  </svg>
+                </button>
+                <button className="action-button" title="Edit">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                  </svg>
+                </button>
+                <button className="action-button" title="Delete">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="red"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <polyline points="3 6 5 6 21 6"></polyline>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    <line x1="10" y1="11" x2="10" y2="17"></line>
+                    <line x1="14" y1="11" x2="14" y2="17"></line>
+                  </svg>
+                </button>
+              </td>
             </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
+          ))
+        ) : (
+          <tr>
+            <td colSpan="8" className="table-cell text-center">No animals found</td>
+          </tr>
+        )}
+      </tbody>
+    </table>
+  </div>
+);
+
 
   // Render applications content
   const renderApplications = () => (
@@ -341,23 +424,23 @@ const AdminDashboard = () => {
         </tbody>
       </table>
     </div>
-  )
+  );
 
   // Render content based on active tab
   const renderContent = () => {
     switch (activeTab) {
       case "dashboard":
-        return renderDashboard()
+        return renderDashboard();
       case "users":
-        return renderUsers()
+        return renderUsers();
       case "animals":
-        return renderAnimals()
+        return renderAnimals();
       case "applications":
-        return renderApplications()
+        return renderApplications();
       default:
-        return renderDashboard()
+        return renderDashboard();
     }
-  }
+  };
 
   return (
     <div className="admin-container">
@@ -486,7 +569,7 @@ const AdminDashboard = () => {
       {/* Main Content */}
       <div className="admin-content">{renderContent()}</div>
     </div>
-  )
-}
+  );
+};
 
 export default AdminDashboard;
