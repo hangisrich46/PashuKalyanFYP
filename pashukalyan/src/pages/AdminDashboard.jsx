@@ -3,20 +3,20 @@ import axios from 'axios';
 import { useState, useEffect } from "react";
 import "../styles/AdminDashboard.css";
 import AddAnimalForm from "../components/AddAnimalForm";
-import { fetchAllAnimals } from '../api.jsx'; // Now properly used
+import { fetchAllAnimals } from '../api.jsx';
+import API from '../api'; // Import API for adoption applications
 
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [showForm, setShowForm] = useState(false);
   const [animals, setAnimals] = useState([]);
-
-  // Sample data for demonstration
-  const stats = {
-    totalUsers: 124,
-    totalAnimals: 57,
-    pendingApplications: 18,
-    approvedApplications: 42,
-  };
+  const [applications, setApplications] = useState([]);
+  const [stats, setStats] = useState({
+    totalUsers: 0,
+    totalAnimals: 0,
+    pendingApplications: 0,
+    approvedApplications: 0,
+  });
 
   const users = [
     { id: 1, name: "John Doe", email: "john@example.com", role: "User", joinDate: "2023-05-15" },
@@ -26,40 +26,72 @@ const AdminDashboard = () => {
     { id: 5, name: "Michael Wilson", email: "michael@example.com", role: "User", joinDate: "2023-08-12" },
   ];
 
-  const applications = [
-    { id: 1, user: "John Doe", animal: "Buddy", date: "2023-09-15", status: "Pending" },
-    { id: 2, user: "Jane Smith", animal: "Luna", date: "2023-08-22", status: "Approved" },
-    { id: 3, user: "Emily Davis", animal: "Max", date: "2023-09-05", status: "Pending" },
-    { id: 4, user: "Michael Wilson", animal: "Whiskers", date: "2023-09-10", status: "Rejected" },
-    { id: 5, user: "Sarah Brown", animal: "Rocky", date: "2023-09-18", status: "Pending" },
-  ];
-
   // Load animals from the backend
- // Load animals from the backend with debugging
-const loadAnimals = async () => {
-  try {
-    const response = await fetchAllAnimals();
-    console.log("API Response:", response); // Debug entire response
-    
-    if (response && response.data) {
-      // Store the animals data
-      setAnimals(response.data);
+  const loadAnimals = async () => {
+    try {
+      const response = await fetchAllAnimals();
       
-      // Debug the first animal's date fields
-      if (response.data.length > 0) {
-        console.log("Sample animal data:", response.data[0]);
-        console.log("Created at (raw):", response.data[0].created_at);
-        console.log("Created at type:", typeof response.data[0].created_at);
+      if (response && response.data) {
+        setAnimals(response.data);
+        updateStats({ totalAnimals: response.data.length });
+      } else {
+        console.error("Invalid response format:", response);
       }
-    } else {
-      console.error("Invalid response format:", response);
+    } catch (error) {
+      console.error("Error loading animals:", error);
     }
-  } catch (error) {
-    console.error("Error loading animals:", error);
-  }
-};
+  };
 
+  // Load adoption applications from the backend
+  const loadApplications = async () => {
+    try {
+      const response = await API.get("/adoption-applications");
+      
+      if (response.data && response.data.success) {
+        setApplications(response.data.data);
+        
+        // Update stats
+        const pendingCount = response.data.data.filter(app => app.status === "Pending").length;
+        const approvedCount = response.data.data.filter(app => app.status === "Approved").length;
+        
+        updateStats({
+          pendingApplications: pendingCount,
+          approvedApplications: approvedCount
+        });
+      } else {
+        console.error("Failed to load applications:", response.data);
+      }
+    } catch (error) {
+      console.error("Error loading applications:", error);
+    }
+  };
 
+  // Update dashboard statistics
+  const updateStats = (newStats) => {
+    setStats(prevStats => ({
+      ...prevStats,
+      ...newStats
+    }));
+  };
+
+  // Handle application status update
+  const handleUpdateStatus = async (applicationId, newStatus) => {
+    try {
+      const response = await API.put(`/adoption-applications/${applicationId}/status?status=${newStatus}`);
+      
+      if (response.data && response.data.success) {
+        console.log("Application status updated:", response.data);
+        
+        // Reload applications and animals to reflect changes
+        await loadApplications();
+        await loadAnimals();
+      } else {
+        console.error("Failed to update application status:", response.data);
+      }
+    } catch (error) {
+      console.error("Error updating application status:", error);
+    }
+  };
 
   // Handle the form submission to add a new animal
   const handleAddAnimal = async (formData) => {
@@ -80,9 +112,10 @@ const loadAnimals = async () => {
     }
   };
 
-  // Fetch animals when the component is mounted
+  // Fetch data when the component is mounted
   useEffect(() => {
     loadAnimals(); // Load animals on component mount
+    loadApplications(); // Load applications on component mount
   }, []);
 
   // Render status badge with appropriate class
@@ -97,11 +130,25 @@ const loadAnimals = async () => {
       badgeClass += " rejected-badge";
     } else if (status === "Available") {
       badgeClass += " available-badge";
-    } else if (status === "Adopted" || status === "Pending Adoption") {
+    } else if (status === "Adopted" || status === "Application Pending") {
       badgeClass += " adopted-badge";
     }
 
     return <span className={badgeClass}>{status}</span>;
+  };
+
+  // Format date to readable format
+  const formatDate = (dateString) => {
+    if (!dateString) return "N/A";
+    
+    // If it's already in the right format, return it
+    if (dateString.includes("-")) {
+      return dateString;
+    }
+    
+    // If it's a timestamp or Date object, format it
+    const date = new Date(dateString);
+    return date.toISOString().split('T')[0]; // Returns YYYY-MM-DD
   };
 
   // Render dashboard content
@@ -148,12 +195,17 @@ const loadAnimals = async () => {
           {applications.slice(0, 3).map((app) => (
             <tr key={app.id} className="table-row">
               <td className="table-cell">{app.id}</td>
-              <td className="table-cell">{app.user}</td>
-              <td className="table-cell">{app.animal}</td>
-              <td className="table-cell">{app.date}</td>
+              <td className="table-cell">{app.applicantName}</td>
+              <td className="table-cell">{app.animal?.name || "Unknown"}</td>
+              <td className="table-cell">{formatDate(app.applicationDate)}</td>
               <td className="table-cell">{renderStatusBadge(app.status)}</td>
             </tr>
           ))}
+          {applications.length === 0 && (
+            <tr>
+              <td colSpan="5" className="table-cell text-center">No applications found</td>
+            </tr>
+          )}
         </tbody>
       </table>
     </div>
@@ -229,116 +281,113 @@ const loadAnimals = async () => {
     </div>
   );
 
- // Render animals content
-const renderAnimals = () => (
-  <div>
-    <div className="content-header">
-      <h1 className="content-title">Animal Listings</h1>
-      <button
-        className="admin-button bg-blue-500 text-white px-4 py-2 rounded"
-        onClick={() => setShowForm(true)}
-      >
-        Add New Animal
-      </button>
-    </div>
+  // Render animals content
+  const renderAnimals = () => (
+    <div>
+      <div className="content-header">
+        <h1 className="content-title">Animal Listings</h1>
+        <button
+          className="admin-button bg-blue-500 text-white px-4 py-2 rounded"
+          onClick={() => setShowForm(true)}
+        >
+          Add New Animal
+        </button>
+      </div>
 
-    {showForm && (
-      <AddAnimalForm
-        onSubmit={handleAddAnimal}
-        onCancel={() => setShowForm(false)}
-      />
-    )}
+      {showForm && (
+        <AddAnimalForm
+          onSubmit={handleAddAnimal}
+          onCancel={() => setShowForm(false)}
+        />
+      )}
 
-    <table className="admin-table">
-      <thead>
-        <tr>
-          <th className="table-header">ID</th>
-          <th className="table-header">Name</th>
-          <th className="table-header">Age</th>
-          <th className="table-header">Gender</th>
-          <th className="table-header">Type</th>
-          <th className="table-header">Status</th>
-          <th className="table-header">Description</th>
-        
-          <th className="table-header">Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        {animals.length > 0 ? (
-          animals.map((animal) => (
-            <tr key={animal.id} className="table-row">
-              <td className="table-cell">{animal.id}</td>
-              <td className="table-cell">{animal.name}</td>
-              <td className="table-cell">{animal.age}</td>
-              <td className="table-cell">{animal.gender}</td>
-              <td className="table-cell">{animal.type}</td>
-              <td className="table-cell">{renderStatusBadge(animal.status)}</td>
-              <td className="table-cell">{animal.description}</td>
-             
-              <td className="table-cell">
-                <button className="action-button" title="View Details">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                    <circle cx="12" cy="12" r="3"></circle>
-                  </svg>
-                </button>
-                <button className="action-button" title="Edit">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                  </svg>
-                </button>
-                <button className="action-button" title="Delete">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="red"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <polyline points="3 6 5 6 21 6"></polyline>
-                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                    <line x1="10" y1="11" x2="10" y2="17"></line>
-                    <line x1="14" y1="11" x2="14" y2="17"></line>
-                  </svg>
-                </button>
-              </td>
-            </tr>
-          ))
-        ) : (
+      <table className="admin-table">
+        <thead>
           <tr>
-            <td colSpan="8" className="table-cell text-center">No animals found</td>
+            <th className="table-header">ID</th>
+            <th className="table-header">Name</th>
+            <th className="table-header">Age</th>
+            <th className="table-header">Gender</th>
+            <th className="table-header">Type</th>
+            <th className="table-header">Status</th>
+            <th className="table-header">Description</th>
+            <th className="table-header">Actions</th>
           </tr>
-        )}
-      </tbody>
-    </table>
-  </div>
-);
-
+        </thead>
+        <tbody>
+          {animals.length > 0 ? (
+            animals.map((animal) => (
+              <tr key={animal.id} className="table-row">
+                <td className="table-cell">{animal.id}</td>
+                <td className="table-cell">{animal.name}</td>
+                <td className="table-cell">{animal.age}</td>
+                <td className="table-cell">{animal.gender}</td>
+                <td className="table-cell">{animal.type}</td>
+                <td className="table-cell">{renderStatusBadge(animal.status)}</td>
+                <td className="table-cell">{animal.description}</td>
+                <td className="table-cell">
+                  <button className="action-button" title="View Details">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                      <circle cx="12" cy="12" r="3"></circle>
+                    </svg>
+                  </button>
+                  <button className="action-button" title="Edit">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                    </svg>
+                  </button>
+                  <button className="action-button" title="Delete">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="red"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <polyline points="3 6 5 6 21 6"></polyline>
+                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                      <line x1="10" y1="11" x2="10" y2="17"></line>
+                      <line x1="14" y1="11" x2="14" y2="17"></line>
+                    </svg>
+                  </button>
+                </td>
+              </tr>
+            ))
+          ) : (
+            <tr>
+              <td colSpan="8" className="table-cell text-center">No animals found</td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+    </div>
+  );
 
   // Render applications content
   const renderApplications = () => (
@@ -351,7 +400,7 @@ const renderAnimals = () => (
         <thead>
           <tr>
             <th className="table-header">ID</th>
-            <th className="table-header">User</th>
+            <th className="table-header">Applicant</th>
             <th className="table-header">Animal</th>
             <th className="table-header">Date</th>
             <th className="table-header">Status</th>
@@ -359,68 +408,82 @@ const renderAnimals = () => (
           </tr>
         </thead>
         <tbody>
-          {applications.map((app) => (
-            <tr key={app.id} className="table-row">
-              <td className="table-cell">{app.id}</td>
-              <td className="table-cell">{app.user}</td>
-              <td className="table-cell">{app.animal}</td>
-              <td className="table-cell">{app.date}</td>
-              <td className="table-cell">{renderStatusBadge(app.status)}</td>
-              <td className="table-cell">
-                <button className="action-button" title="View">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                    <circle cx="12" cy="12" r="3"></circle>
-                  </svg>
-                </button>
-                {app.status === "Pending" && (
-                  <>
-                    <button className="action-button" title="Approve">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="18"
-                        height="18"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="green"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
+          {applications.length > 0 ? (
+            applications.map((app) => (
+              <tr key={app.id} className="table-row">
+                <td className="table-cell">{app.id}</td>
+                <td className="table-cell">{app.applicantName}</td>
+                <td className="table-cell">{app.animal?.name || "Unknown"}</td>
+                <td className="table-cell">{formatDate(app.applicationDate)}</td>
+                <td className="table-cell">{renderStatusBadge(app.status)}</td>
+                <td className="table-cell">
+                  <button className="action-button" title="View">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                      <circle cx="12" cy="12" r="3"></circle>
+                    </svg>
+                  </button>
+                  {app.status === "Pending" && (
+                    <>
+                      <button 
+                        className="action-button" 
+                        title="Approve" 
+                        onClick={() => handleUpdateStatus(app.id, "Approved")}
                       >
-                        <polyline points="20 6 9 17 4 12"></polyline>
-                      </svg>
-                    </button>
-                    <button className="action-button" title="Reject">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="18"
-                        height="18"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="red"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="18"
+                          height="18"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="green"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                      </button>
+                      <button 
+                        className="action-button" 
+                        title="Reject" 
+                        onClick={() => handleUpdateStatus(app.id, "Rejected")}
                       >
-                        <line x1="18" y1="6" x2="6" y2="18"></line>
-                        <line x1="6" y1="6" x2="18" y2="18"></line>
-                      </svg>
-                    </button>
-                  </>
-                )}
-              </td>
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="18"
+                          height="18"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="red"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <line x1="18" y1="6" x2="6" y2="18"></line>
+                          <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                      </button>
+                    </>
+                  )}
+                </td>
+              </tr>
+            ))
+          ) : (
+            <tr>
+              <td colSpan="6" className="table-cell text-center">No applications found</td>
             </tr>
-          ))}
+          )}
         </tbody>
       </table>
     </div>

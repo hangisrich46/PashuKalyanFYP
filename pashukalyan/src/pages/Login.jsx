@@ -26,6 +26,16 @@ const Login = () => {
     setErrors(null);
 
     try {
+      // Clear any existing session data first
+      localStorage.removeItem("userSession");
+      sessionStorage.removeItem("userEmail");
+      
+      // Force expire cookies
+      document.cookie.split(";").forEach(function(c) {
+        document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+      });
+      
+      // Perform login
       const response = await axios.post(
         "http://localhost:8080/api/login",
         { email, password },
@@ -33,13 +43,20 @@ const Login = () => {
       );
 
       if (response.status === 200) {
-        // Store session data
-        sessionStorage.setItem("userEmail", email);
-
+        // Store user info in localStorage for consistent auth checking
+        localStorage.setItem("userSession", JSON.stringify({ 
+          email, 
+          timestamp: Date.now(),
+          // Add other user info if needed
+        }));
+        
+        console.log("Login successful, stored session data");
+        
         // Redirect to /Home
-        navigate("/Home");
+        navigate("/");
       }
     } catch (error) {
+      console.error("Login error:", error);
       setErrors(error.response?.data || "Login failed! Please check your credentials.");
     }
   };
@@ -49,14 +66,14 @@ const Login = () => {
       <main className="flex-grow flex flex-col md:flex-row p-6 gap-8">
         <div className="md:w-1/2 space-y-8">
           <div>
-            <h2 className="text-2xl font-medium text-[#000000] mb-4">‘ SERVING THE NEEDY ONES ’</h2>
+            <h2 className="text-2xl font-medium text-[#000000] mb-4">' SERVING THE NEEDY ONES '</h2>
             <div className="rounded overflow-hidden">
               <img src="logincv.png" alt="People with dogs" className="w-full object-cover h-[300px]" />
             </div>
           </div>
 
           <div>
-            <h2 className="text-2xl font-medium text-[#000000] mb-4">‘ SAVE AND GIVE HOME ’</h2>
+            <h2 className="text-2xl font-medium text-[#000000] mb-4">' SAVE AND GIVE HOME '</h2>
             <div className="rounded overflow-hidden">
               <img src="feed.png" alt="People helping dogs" className="w-full object-cover h-[300px]" />
             </div>
@@ -136,7 +153,7 @@ const Login = () => {
               </button>
 
               <div className="text-center text-sm text-[#757575]">
-                Don’t have an account?{" "}
+                Don't have an account?{" "}
                 <a href="/register" className="text-[#000000] hover:underline">
                   Register
                 </a>

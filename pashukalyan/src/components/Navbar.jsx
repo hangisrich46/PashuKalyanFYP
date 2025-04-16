@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react"
 import { Link, useNavigate } from "react-router-dom"
+import API from "../api"
+
 
 const Navbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
@@ -14,12 +16,37 @@ const Navbar = () => {
     setIsAuthenticated(!!userSession)
   }, [])
 
-  const handleLogout = () => {
-    localStorage.removeItem("userSession")
-    setIsAuthenticated(false)
-    navigate("/login")
-  }
-
+  const handleLogout = async () => {
+    try {
+      // 1. Call backend logout endpoint to invalidate session
+      const response = await API.post("/logout");
+      console.log("Logout response:", response.data);
+      
+      // 2. Clear all possible frontend storage
+      localStorage.removeItem("userSession");
+      sessionStorage.removeItem("userSession");
+      
+      // 3. Set explicit state
+      setIsAuthenticated(false);
+      
+      // 4. Forcefully expire any cookies (in case backend missed some)
+      document.cookie.split(";").forEach(function(c) {
+        document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+      });
+      
+      // 5. Add a small delay before redirecting to ensure operations complete
+      setTimeout(() => {
+        // 6. Use window.location for a complete page refresh instead of navigate
+        window.location.href = "/login";
+      }, 100);
+    } catch (error) {
+      console.error("Error during logout:", error);
+      // Still perform cleanup and redirect if API call fails
+      localStorage.removeItem("userSession");
+      sessionStorage.removeItem("userSession");
+      window.location.href = "/login";
+    }
+  };
   const styles = {
     header: {
       backgroundColor: "#dfdbdb",

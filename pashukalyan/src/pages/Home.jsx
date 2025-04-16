@@ -1,9 +1,12 @@
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
+import DevSessionCheck from "../components/DevSessionCheck"; // make sure the path is correct
 
 const Home = () => {
   return (
     <div className="bg-[#f5f5f5] min-h-screen">
+      <DevSessionCheck /> {/* Logs session info on page load */}
+
       {/* Hero Section */}
       <section className="w-full bg-[#f0f0f0] py-16">
         <div className="container mx-auto px-4 md:px-6 flex flex-col md:flex-row items-center">
@@ -26,8 +29,8 @@ const Home = () => {
               alt="Volunteers with rescued dogs"
               className="w-full h-auto rounded-md shadow-md"
               onError={(e) => {
-                e.target.onerror = null
-                e.target.src = "https://placehold.co/600x400?text=Volunteers+with+Dogs"
+                e.target.onerror = null;
+                e.target.src = "https://placehold.co/600x400?text=Volunteers+with+Dogs";
               }}
             />
           </div>
@@ -44,10 +47,6 @@ const Home = () => {
                 src="https://placehold.co/600x300?text=Feeding+Campaign"
                 alt="Feeding campaign"
                 className="w-full h-48 object-cover rounded-md mb-4"
-                onError={(e) => {
-                  e.target.onerror = null
-                  e.target.src = "https://placehold.co/600x300?text=Feeding+Campaign"
-                }}
               />
               <h3 className="text-lg font-medium text-black mb-2">How can you be a part of our fooding campaign?</h3>
               <a href="/feeding-campaign" className="text-black font-medium hover:underline">
@@ -61,10 +60,6 @@ const Home = () => {
                 src="https://placehold.co/600x300?text=Adopt+a+Pet"
                 alt="Dog for adoption"
                 className="w-full h-48 object-cover rounded-md mb-4"
-                onError={(e) => {
-                  e.target.onerror = null
-                  e.target.src = "https://placehold.co/600x300?text=Adopt+a+Pet"
-                }}
               />
               <h3 className="text-lg font-medium text-black mb-2">Want to give them a home?</h3>
               <a href="/adopt" className="text-black font-medium hover:underline">
@@ -89,11 +84,7 @@ const Home = () => {
         </div>
       </section>
     </div>
-  )
-}
-
-
-
-
+  );
+};
 
 export default Home;
