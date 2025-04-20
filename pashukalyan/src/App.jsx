@@ -8,6 +8,7 @@ import Adopt from "./pages/Adopt";
 import Register from "./pages/Register";
 import AdminDashboard from "./pages/AdminDashboard";
 import API from "./api"; // Import your API
+import AboutUs from "./pages/About";
 
 function App() {
   // Add session checking logic
@@ -50,6 +51,7 @@ function App() {
             <Route path="/adopt" element={<Adopt />}/>
             <Route path="/register" element={<Register />} />
             <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/about" element={<AboutUs />} />
           </Routes>
         </main>
         <Footer />

@@ -3,17 +3,20 @@ import axios from 'axios';
 import { useState, useEffect } from "react";
 import "../styles/AdminDashboard.css";
 import AddAnimalForm from "../components/AddAnimalForm";
-import { fetchAllAnimals } from '../api.jsx';
+import AddFoodForm from "../components/AddFoodForm";
+import { fetchAllAnimals, fetchAllFood, addFood, deleteFood } from '../api.jsx';
 import API from '../api'; // Import API for adoption applications
-
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [showForm, setShowForm] = useState(false);
+  const [showFoodForm, setShowFoodForm] = useState(false);
   const [animals, setAnimals] = useState([]);
+  const [foodItems, setFoodItems] = useState([]);
   const [applications, setApplications] = useState([]);
   const [stats, setStats] = useState({
     totalUsers: 0,
     totalAnimals: 0,
+    totalFoodItems: 0,
     pendingApplications: 0,
     approvedApplications: 0,
   });
@@ -26,8 +29,8 @@ const AdminDashboard = () => {
     { id: 5, name: "Michael Wilson", email: "michael@example.com", role: "User", joinDate: "2023-08-12" },
   ];
 
-  // Load animals from the backend
-  const loadAnimals = async () => {
+   // Load animals from the backend
+   const loadAnimals = async () => {
     try {
       const response = await fetchAllAnimals();
       
@@ -39,6 +42,27 @@ const AdminDashboard = () => {
       }
     } catch (error) {
       console.error("Error loading animals:", error);
+    }
+  };
+
+
+  // Load food items from the backend
+  const loadFood = async () => {
+    try {
+      const response = await fetchAllFood();
+      
+      if (response && response.data) {
+        // API returns the full response, so we need to check for data.data or just data
+        const foodData = response.data.data || response.data;
+        setFoodItems(foodData);
+        updateStats({ totalFoodItems: Array.isArray(foodData) ? foodData.length : 0 });
+        
+        console.log("Food items loaded:", foodData);
+      } else {
+        console.error("Invalid response format:", response);
+      }
+    } catch (error) {
+      console.error("Error loading food items:", error);
     }
   };
 
@@ -112,10 +136,30 @@ const AdminDashboard = () => {
     }
   };
 
+  // Handle the form submission to add a new food item
+  const handleAddFood = async (formData) => {
+    try {
+      // Send the FormData to your backend API
+      const response = await axios.post("http://localhost:8080/api/food", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data", // Set the header for file uploads
+        },
+      });
+
+      console.log("Food item added successfully:", response.data);
+      setShowFoodForm(false); // Close the form after successful submission
+      await loadFood(); // Reload the food list after adding a new item
+    } catch (error) {
+      console.error("Error adding food item:", error);
+      // Handle error (e.g., show error message)
+    }
+  };
+
   // Fetch data when the component is mounted
   useEffect(() => {
     loadAnimals(); // Load animals on component mount
     loadApplications(); // Load applications on component mount
+    loadFood(); // Load food items on component mount
   }, []);
 
   // Render status badge with appropriate class
@@ -166,6 +210,10 @@ const AdminDashboard = () => {
         <div className="stat-card">
           <div className="stat-title">TOTAL ANIMALS</div>
           <div className="stat-value">{stats.totalAnimals}</div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-title">TOTAL FOOD ITEMS</div>
+          <div className="stat-value">{stats.totalFoodItems}</div>
         </div>
         <div className="stat-card">
           <div className="stat-title">PENDING APPLICATIONS</div>
@@ -281,7 +329,8 @@ const AdminDashboard = () => {
     </div>
   );
 
-  // Render animals content
+  
+      // Render animals content
   const renderAnimals = () => (
     <div>
       <div className="content-header">
@@ -489,6 +538,125 @@ const AdminDashboard = () => {
     </div>
   );
 
+  // Render food content
+  const renderFood = () => (
+    <div>
+      <div className="content-header">
+        <h1 className="content-title">Food Items</h1>
+        <button
+          className="admin-button bg-blue-500 text-white px-4 py-2 rounded"
+          onClick={() => setShowFoodForm(true)}
+        >
+          Add New Food
+        </button>
+      </div>
+
+      {showFoodForm && (
+        <AddFoodForm
+          onSubmit={handleAddFood}
+          onCancel={() => setShowFoodForm(false)}
+        />
+      )}
+
+      <table className="admin-table">
+        <thead>
+          <tr>
+            <th className="table-header">ID</th>
+            <th className="table-header">Image</th>
+            <th className="table-header">Name</th>
+            <th className="table-header">Price</th>
+            <th className="table-header">Description</th>
+            <th className="table-header">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {foodItems && foodItems.length > 0 ? (
+            foodItems.map((food) => (
+              <tr key={food.id} className="table-row">
+                <td className="table-cell">{food.id}</td>
+                <td className="table-cell">
+                  {food.imageUrl && (
+                    <img 
+                      src={`http://localhost:8080${food.imageUrl}`} 
+                      alt={food.name} 
+                      className="w-16 h-16 object-cover rounded"
+                    />
+                  )}
+                </td>
+                <td className="table-cell">{food.name}</td>
+                <td className="table-cell">Rs{parseFloat(food.price).toFixed(2)}</td>
+                <td className="table-cell">
+                  {food.description.length > 100
+                    ? `${food.description.substring(0, 100)}...`
+                    : food.description}
+                </td>
+                <td className="table-cell">
+                  <button className="action-button" title="View Details">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                      <circle cx="12" cy="12" r="3"></circle>
+                    </svg>
+                  </button>
+                  <button className="action-button" title="Edit">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                    </svg>
+                  </button>
+                  <button 
+                    className="action-button" 
+                    title="Delete"
+                    onClick={() => handleDeleteFood(food.id)}
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="red"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <polyline points="3 6 5 6 21 6"></polyline>
+                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                      <line x1="10" y1="11" x2="10" y2="17"></line>
+                      <line x1="14" y1="11" x2="14" y2="17"></line>
+                    </svg>
+                  </button>
+                </td>
+              </tr>
+            ))
+          ) : (
+            <tr>
+              <td colSpan="6" className="table-cell text-center">No food items found</td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+    </div>
+  );
   // Render content based on active tab
   const renderContent = () => {
     switch (activeTab) {
@@ -500,6 +668,8 @@ const AdminDashboard = () => {
         return renderAnimals();
       case "applications":
         return renderApplications();
+      case "food":
+        return renderFood();
       default:
         return renderDashboard();
     }
@@ -607,6 +777,31 @@ const AdminDashboard = () => {
           </svg>
           Applications
         </div>
+        
+        <div
+  className={`nav-item ${activeTab === "food" ? "active-nav-item" : ""}`}
+  onClick={() => setActiveTab("food")}
+>
+  <svg
+    className="nav-icon"
+    xmlns="http://www.w3.org/2000/svg"
+    width="20"
+    height="20"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M18 8h1a4 4 0 0 1 0 8h-1"></path>
+    <path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"></path>
+    <line x1="6" y1="1" x2="6" y2="4"></line>
+    <line x1="10" y1="1" x2="10" y2="4"></line>
+    <line x1="14" y1="1" x2="14" y2="4"></line>
+  </svg>
+  Food
+</div>
 
         <div className="nav-item logout-item">
           <svg

@@ -114,6 +114,71 @@ export const deleteAnimal = async (id) => {
     throw error.response?.data || "Failed to delete animal";
   }
 };
+//----FOOD API ADMIN
+// Get all food items
+export const fetchAllFood = async () => {
+  try {
+    const response = await API.get('/food');
+    return response;
+  } catch (error) {
+    console.error('Error fetching food items:', error);
+    throw error;
+  }
+};
+
+// Get food by ID
+export const getFoodById = async (id) => {
+  try {
+    const response = await API.get(`/food/${id}`);
+    return response;
+  } catch (error) {
+    console.error(`Error fetching food item with id ${id}:`, error);
+    throw error;
+  }
+};
+
+// Add a new food item
+export const addFood = async (foodData) => {
+  try {
+    const response = await API.post('/food', foodData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response;
+  } catch (error) {
+    console.error('Error adding food item:', error);
+    throw error;
+  }
+};
+
+// Update a food item
+export const updateFood = async (id, foodData) => {
+  try {
+    const response = await API.put(`/food/${id}`, foodData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response;
+  } catch (error) {
+    console.error(`Error updating food item with id ${id}:`, error);
+    throw error;
+  }
+};
+
+// Delete a food item
+export const deleteFood = async (id) => {
+  try {
+    const response = await API.delete(`/food/${id}`);
+    return response;
+  } catch (error) {
+    console.error(`Error deleting food item with id ${id}:`, error);
+    throw error;
+  }
+};
+
+
 
 
 export default API;
