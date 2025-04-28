@@ -1,6 +1,5 @@
 import axios from "axios";
 
-
 const API_URL = "/api/payment/esewa";
 
 const API = axios.create({
@@ -125,6 +124,7 @@ export const deleteAnimal = async (id) => {
     throw error.response?.data || "Failed to delete animal";
   }
 };
+
 //----FOOD API ADMIN
 // Get all food items
 export const fetchAllFood = async () => {
@@ -189,11 +189,6 @@ export const deleteFood = async (id) => {
   }
 };
 
-//esewa part
-
-
-
-
 // ESewa API service
 export const esewaApi = {
   // Initiate payment
@@ -220,5 +215,63 @@ export const esewaApi = {
   }
 };
 
+// ---------- DONATION APIs ----------
+
+// Record a new donation
+export const recordDonation = async (donationData) => {
+  try {
+    const response = await API.post("/donations/record", donationData);
+    console.log("Donation recorded successfully:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error("Error recording donation:", error);
+    throw error.response?.data || { success: false, message: "Failed to record donation" };
+  }
+};
+
+// Get all donations (admin feature)
+export const getAllDonations = async () => {
+  try {
+    const response = await API.get("/donations");
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching donations:", error);
+    throw error.response?.data || { success: false, message: "Failed to fetch donations" };
+  }
+};
+
+// Get donation by ID
+export const getDonationById = async (donationId) => {
+  try {
+    const response = await API.get(`/donations/id/${donationId}`);
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching donation with ID ${donationId}:`, error);
+    throw error.response?.data || { success: false, message: "Failed to fetch donation" };
+  }
+};
+
+// Get donations by user ID
+export const getDonationsByUserId = async (userId) => {
+  try {
+    const response = await API.get(`/donations/user/${userId}`);
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching donations for user ${userId}:`, error);
+    throw error.response?.data || { success: false, message: "Failed to fetch user donations" };
+  }
+};
+
+// Get donation invoice
+export const getDonationInvoice = async (donationId) => {
+  try {
+    // Using window.open for direct download instead of axios
+    window.open(`${API.defaults.baseURL}/donations/id/${donationId}/invoice`, '_blank');
+    return { success: true, message: "Invoice download initiated" };
+  } catch (error) {
+    console.error(`Error downloading invoice for donation ${donationId}:`, error);
+    throw { success: false, message: "Failed to download invoice" };
+  }
+};
 
 export default API;

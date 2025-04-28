@@ -5,11 +5,13 @@ import java.time.LocalDate;
 
 @Entity
 @Table(name = "adoption_applications")
+
 public class AdoptionApplication {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
 
     @ManyToOne
     @JoinColumn(name = "animal_id", nullable = false)
@@ -32,6 +34,9 @@ public class AdoptionApplication {
     public AdoptionApplication() {
         this.applicationDate = LocalDate.now();
     }
+
+
+
 
     // Constructor with parameters
     public AdoptionApplication(Animal animal, User user) {

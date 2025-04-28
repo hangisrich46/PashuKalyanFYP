@@ -4,7 +4,14 @@ import { useState, useEffect } from "react";
 import "../styles/AdminDashboard.css";
 import AddAnimalForm from "../components/AddAnimalForm";
 import AddFoodForm from "../components/AddFoodForm";
-import { fetchAllAnimals, fetchAllFood, addFood, deleteFood } from '../api.jsx';
+import { fetchAllAnimals, fetchAllFood, addFood, deleteFood,deleteAnimal } from '../api.jsx';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
+
+
+
+
 import API from '../api'; // Import API for adoption applications
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
@@ -117,7 +124,7 @@ const AdminDashboard = () => {
     }
   };
 
-  // Handle the form submission to add a new animal
+
   const handleAddAnimal = async (formData) => {
     try {
       // Send the FormData to your backend API
@@ -126,15 +133,52 @@ const AdminDashboard = () => {
           "Content-Type": "multipart/form-data", // Set the header for file uploads
         },
       });
-
+  
       console.log("Animal added successfully:", response.data);
       setShowForm(false); // Close the form after successful submission
       await loadAnimals(); // Reload the animal list after adding a new animal
+  
+      // Show success toast notification
+      toast.success('✅ Animal added for adoption successfully!', {
+        position: "top-center",
+        autoClose: 3000,
+      });
     } catch (error) {
       console.error("Error adding animal:", error);
-      // Handle error (e.g., show error message)
+      toast.error('❌ Failed to add animal. Please try again.', {
+        position: "top-center",
+        autoClose: 3000,
+      });
     }
   };
+  
+  const handleDeleteAnimal = async (id) => {
+    const confirmDelete = window.confirm('Are you sure you want to delete this animal?');
+    if (!confirmDelete) {
+      toast.info('❌ Animal delete cancelled.', {
+        position: "top-center",
+        autoClose: 3000,
+      });
+      return;
+    }
+  
+    try {
+      await deleteAnimal(id); // Call the API to delete the animal
+      setAnimals((prevAnimals) => prevAnimals.filter((animal) => animal.id !== id)); // Update the local state
+      toast.success('✅ Animal deleted successfully!', {
+        position: "top-center",
+        autoClose: 3000,
+      });
+    } catch (error) {
+      console.error("Failed to delete animal:", error);
+      toast.error(error?.message || '❌ Failed to delete animal.', {
+        position: "top-center",
+        autoClose: 3000,
+      });
+    }
+  };
+  
+  
 
   // Handle the form submission to add a new food item
   const handleAddFood = async (formData) => {
@@ -375,22 +419,7 @@ const AdminDashboard = () => {
                 <td className="table-cell">{renderStatusBadge(animal.status)}</td>
                 <td className="table-cell">{animal.description}</td>
                 <td className="table-cell">
-                  <button className="action-button" title="View Details">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="18"
-                      height="18"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                      <circle cx="12" cy="12" r="3"></circle>
-                    </svg>
-                  </button>
+                 
                   <button className="action-button" title="Edit">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
@@ -407,7 +436,11 @@ const AdminDashboard = () => {
                       <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                     </svg>
                   </button>
-                  <button className="action-button" title="Delete">
+                  <button
+  className="action-button"
+  title="Delete"
+  onClick={() => handleDeleteAnimal(animal.id)}
+>
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       width="18"
@@ -822,6 +855,8 @@ const AdminDashboard = () => {
           </svg>
           Logout
         </div>
+        <ToastContainer /> {/* Display the toast notifications */}
+
       </div>
 
       {/* Main Content */}

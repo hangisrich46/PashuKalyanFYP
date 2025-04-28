@@ -94,4 +94,19 @@ public class AnimalController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
+    @DeleteMapping("/{id}")
+    public ResponseEntity<String> deleteAnimal(@PathVariable Long id) {
+        try {
+            animalService.deleteAnimal(id);
+            return ResponseEntity.ok("Animal deleted successfully.");
+        } catch (RuntimeException e) {
+            return ResponseEntity
+                    .status(404)
+                    .body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity
+                    .status(500)
+                    .body("An unexpected error occurred while deleting the animal.");
+        }
+    }
 }

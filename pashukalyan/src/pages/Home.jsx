@@ -25,7 +25,7 @@ const Home = () => {
           </div>
           <div className="md:w-1/2">
             <img
-              src="rahul.jpg"
+              src="rescue.jpg"
               alt="Volunteers with rescued dogs"
               className="w-full h-auto rounded-md shadow-md"
               onError={(e) => {
@@ -44,7 +44,7 @@ const Home = () => {
             {/* Feeding Campaign */}
             <div className="bg-[#f0f0f0] p-4 rounded-md">
               <img
-                src="https://placehold.co/600x300?text=Feeding+Campaign"
+                src="feed.png"
                 alt="Feeding campaign"
                 className="w-full h-48 object-cover rounded-md mb-4"
               />
@@ -57,7 +57,7 @@ const Home = () => {
             {/* Adoption */}
             <div className="bg-[#f0f0f0] p-4 rounded-md">
               <img
-                src="https://placehold.co/600x300?text=Adopt+a+Pet"
+                src="kalu.JPG"
                 alt="Dog for adoption"
                 className="w-full h-48 object-cover rounded-md mb-4"
               />

@@ -2,9 +2,12 @@ package com.pashuKalyan.model;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.util.List;
+
 
 @Entity
 @Table(name = "animals")
+
 public class Animal {
 
     @Id
@@ -36,6 +39,9 @@ public class Animal {
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    @OneToMany(mappedBy = "animal", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<AdoptionApplication> adoptionApplications;
 
     // Constructors
     public Animal() {}

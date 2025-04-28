@@ -14,7 +14,7 @@ const AboutUs = () => {
       <div className="about-section">
         <div className="image-container">
           <img
-            src="/images/about-dogs.jpg"
+            src="orga.jpg"
             alt="Stray dogs at the shelter"
             className="about-image"
           />
@@ -41,7 +41,7 @@ const AboutUs = () => {
       <div className="about-section reverse">
         <div className="image-container">
           <img
-            src="/images/adoption.jpg"
+            src="adoptioncomp.jpg"
             alt="Person adopting a dog"
             className="about-image"
           />
@@ -66,7 +66,7 @@ const AboutUs = () => {
       <div className="about-section">
         <div className="image-container">
           <img
-            src="/images/donation.jpg"
+            src="fooddonatw.jpg"
             alt="Dog food donation"
             className="about-image"
           />
@@ -75,11 +75,11 @@ const AboutUs = () => {
           <h2>Support & Donations</h2>
           <p>
             Even small gestures can go a long way. If you're unable to adopt, you can still help!
-            We accept donations in the form of pet food, blankets, or other basic supplies.
+            We accept donations in the form of pet food that you can purchase from our site.Any small buying of your food will help us.
           </p>
           <p>
             Your contribution helps us feed and care for the animals waiting to be adopted. 
-            To support, you can reach out through our <a href="/contact">contact page</a> or visit 
+            To support, you can reach out through our <a href="/donate">donate page</a> or visit 
             our donation partner links.
           </p>
         </div>

@@ -3,9 +3,11 @@ import { useNavigate } from "react-router-dom";
 import { v4 as uuidv4 } from "uuid";
 import CryptoJS from "crypto-js";
 import esewaLogo from "../assets/esewa-logo.png";
+import { checkSession } from "../api";
 
 const ESewaPayment = ({ cart, onPaymentStart }) => {
   const navigate = useNavigate();
+  const [userId, setUserId] = useState(null);
   
   // Create state for payment data
   const [paymentData, setPaymentData] = useState({
@@ -23,7 +25,35 @@ const ESewaPayment = ({ cart, onPaymentStart }) => {
     secret: "8gBm/:&EnhH.1/q",
   });
   
-  // Generate signature function - exactly like your friend's code
+  // Check for user session on component mount
+  useEffect(() => {
+    const getUserInfo = async () => {
+      try {
+        const sessionData = await checkSession();
+        // Extract user ID from session - adjust this based on your session structure
+        if (sessionData && typeof sessionData === "string") {
+          // Parse user ID from session if possible
+          // This is a placeholder - adapt to your actual session format
+          const userIdMatch = sessionData.match(/ID: (\d+)/);
+          if (userIdMatch && userIdMatch[1]) {
+            setUserId(parseInt(userIdMatch[1]));
+          } else {
+            // Default to 1 if can't extract ID
+            setUserId(1);
+          }
+        } else {
+          setUserId(1); // Default user ID if session format is unexpected
+        }
+      } catch (error) {
+        console.error("Session check error:", error);
+        setUserId(1); // Default user ID on error
+      }
+    };
+    
+    getUserInfo();
+  }, []);
+  
+  // Generate signature function 
   const generateSignature = (
     total_amount,
     transaction_uuid,
@@ -73,7 +103,9 @@ const ESewaPayment = ({ cart, onPaymentStart }) => {
       onPaymentStart?.();
       
       // Store cart in localStorage for reference after payment
+      // Include userId for backend integration
       localStorage.setItem("pendingDonation", JSON.stringify({
+        userId: userId,
         cart,
         amount: paymentData.amount,
         tax: paymentData.tax_amount,
@@ -81,6 +113,9 @@ const ESewaPayment = ({ cart, onPaymentStart }) => {
         transactionUuid: paymentData.transaction_uuid,
         timestamp: new Date().getTime()
       }));
+      
+      // Also store userId separately for easier access
+      localStorage.setItem("userId", userId);
       
       // Create and submit the form
       const form = document.createElement("form");

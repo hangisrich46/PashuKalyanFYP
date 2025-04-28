@@ -12,6 +12,8 @@ import AboutUs from "./pages/About";
 import Donate from "./pages/Donate";
 import Checkout from "./pages/Checkout";
 import PaymentSuccess from "./pages/PaymentSuccess";
+import { ToastContainer } from 'react-toastify'; // Import ToastContainer
+import 'react-toastify/dist/ReactToastify.css'; // Import react-toastify styles
 
 function App() {
   // Add session checking logic
@@ -50,21 +52,28 @@ function App() {
         <main className="flex-grow">
           <Routes>
             <Route path="/" element={<Home />} />
-            <Route path="/login" element={<Login />}/>
-            <Route path="/adopt" element={<Adopt />}/>
+            <Route path="/login" element={<Login />} />
+            <Route path="/adopt" element={<Adopt />} />
             <Route path="/register" element={<Register />} />
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/about" element={<AboutUs />} />
             <Route path="/donate" element={<Donate />} />
             <Route path="/checkout" element={<Checkout />} />
             <Route path="/checkout/success" element={<PaymentSuccess />} />
-
-
-            
           </Routes>
         </main>
         <Footer />
       </div>
+      {/* ToastContainer should be placed outside the main content */}
+      <ToastContainer
+        position="top-center"
+        autoClose={3000} // Set toast display duration
+        hideProgressBar={false}
+        closeOnClick
+        pauseOnHover
+        draggable
+        pauseOnFocusLoss
+      />
     </Router>
   );
 }
