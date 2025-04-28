@@ -274,4 +274,38 @@ export const getDonationInvoice = async (donationId) => {
   }
 };
 
+const BASE_URL = "/api/adoption-applications";
+
+export const fetchAllApplications = async () => {
+  const response = await axios.get(BASE_URL);
+  return response.data.data;  // Assuming backend returns { success, data, count }
+};
+
+export const fetchUserApplications = async () => {
+  const response = await axios.get(`${BASE_URL}/user`);
+  return response.data.data;
+};
+
+export const fetchAnimalApplications = async (animalId) => {
+  const response = await axios.get(`${BASE_URL}/animal/${animalId}`);
+  return response.data.data;
+};
+
+export const fetchPendingApplications = async () => {
+  const response = await axios.get(`${BASE_URL}/pending`);
+  return response.data.data;
+};
+
+export const applyForAdoption = async (animalId) => {
+  const response = await axios.post(BASE_URL, { animalId });
+  return response.data;
+};
+
+export const updateApplicationStatus = async (applicationId, newStatus) => {
+  const response = await axios.put(`${BASE_URL}/${applicationId}/status`, null, {
+    params: { status: newStatus }
+  });
+  return response.data;
+};
+
 export default API;

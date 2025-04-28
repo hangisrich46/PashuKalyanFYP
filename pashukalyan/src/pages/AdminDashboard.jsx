@@ -4,15 +4,11 @@ import { useState, useEffect } from "react";
 import "../styles/AdminDashboard.css";
 import AddAnimalForm from "../components/AddAnimalForm";
 import AddFoodForm from "../components/AddFoodForm";
-import { fetchAllAnimals, fetchAllFood, addFood, deleteFood,deleteAnimal } from '../api.jsx';
+import { fetchAllAnimals, fetchAllFood, addFood, deleteFood,deleteAnimal, updateApplicationStatus } from '../api.jsx';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import API from '../api'; // 
 
-
-
-
-
-import API from '../api'; // Import API for adoption applications
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [showForm, setShowForm] = useState(false);
@@ -96,6 +92,8 @@ const AdminDashboard = () => {
       console.error("Error loading applications:", error);
     }
   };
+
+ 
 
   // Update dashboard statistics
   const updateStats = (newStats) => {
@@ -471,105 +469,111 @@ const AdminDashboard = () => {
     </div>
   );
 
-  // Render applications content
-  const renderApplications = () => (
-    <div>
-      <div className="content-header">
-        <h1 className="content-title">Adoption Applications</h1>
-      </div>
-
-      <table className="admin-table">
-        <thead>
-          <tr>
-            <th className="table-header">ID</th>
-            <th className="table-header">Applicant</th>
-            <th className="table-header">Animal</th>
-            <th className="table-header">Date</th>
-            <th className="table-header">Status</th>
-            <th className="table-header">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {applications.length > 0 ? (
-            applications.map((app) => (
-              <tr key={app.id} className="table-row">
-                <td className="table-cell">{app.id}</td>
-                <td className="table-cell">{app.applicantName}</td>
-                <td className="table-cell">{app.animal?.name || "Unknown"}</td>
-                <td className="table-cell">{formatDate(app.applicationDate)}</td>
-                <td className="table-cell">{renderStatusBadge(app.status)}</td>
-                <td className="table-cell">
-                  <button className="action-button" title="View">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="18"
-                      height="18"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                      <circle cx="12" cy="12" r="3"></circle>
-                    </svg>
-                  </button>
-                  {app.status === "Pending" && (
-                    <>
-                      <button 
-                        className="action-button" 
-                        title="Approve" 
-                        onClick={() => handleUpdateStatus(app.id, "Approved")}
-                      >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          width="18"
-                          height="18"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="green"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <polyline points="20 6 9 17 4 12"></polyline>
-                        </svg>
-                      </button>
-                      <button 
-                        className="action-button" 
-                        title="Reject" 
-                        onClick={() => handleUpdateStatus(app.id, "Rejected")}
-                      >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          width="18"
-                          height="18"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="red"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <line x1="18" y1="6" x2="6" y2="18"></line>
-                          <line x1="6" y1="6" x2="18" y2="18"></line>
-                        </svg>
-                      </button>
-                    </>
-                  )}
-                </td>
-              </tr>
-            ))
-          ) : (
-            <tr>
-              <td colSpan="6" className="table-cell text-center">No applications found</td>
-            </tr>
-          )}
-        </tbody>
-      </table>
+// Render applications content
+const renderApplications = () => (
+  <div>
+    <div className="content-header">
+      <h1 className="content-title">Adoption Applications</h1>
     </div>
-  );
+
+    <table className="admin-table">
+      <thead>
+        <tr>
+          <th className="table-header">ID</th>
+          <th className="table-header">Applicant</th>
+          <th className="table-header">Animal</th>
+          <th className="table-header">Date</th>
+          <th className="table-header">Status</th>
+          <th className="table-header">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {applications.length > 0 ? (
+          applications.map((app) => (
+            <tr key={app.id} className="table-row">
+              <td className="table-cell">{app.id}</td>
+              <td className="table-cell">{app.applicantName}</td>
+              <td className="table-cell">{app.animal?.name || "Unknown"}</td>
+              <td className="table-cell">{formatDate(app.applicationDate)}</td>
+              <td className="table-cell">{renderStatusBadge(app.status)}</td>
+              <td className="table-cell">
+                <button className="action-button" title="View">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                  </svg>
+                </button>
+
+                {app.status === "Pending" && (
+                  <>
+                    <button
+                      className="action-button"
+                      title="Approve"
+                      onClick={() => handleUpdateStatus(app.id, "Approved")}
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="18"
+                        height="18"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="green"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                      </svg>
+                    </button>
+
+                    <button
+                      className="action-button"
+                      title="Reject"
+                      onClick={() => handleUpdateStatus(app.id, "Rejected")}
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="18"
+                        height="18"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="red"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                      </svg>
+                    </button>
+                  </>
+                )}
+              </td>
+            </tr>
+          ))
+        ) : (
+          <tr>
+            <td colSpan="6" className="table-cell text-center">
+              No applications found
+            </td>
+          </tr>
+        )}
+      </tbody>
+    </table>
+  </div>
+);
+
+
 
   // Render food content
   const renderFood = () => (

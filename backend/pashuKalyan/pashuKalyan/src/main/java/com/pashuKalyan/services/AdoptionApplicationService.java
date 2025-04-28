@@ -18,45 +18,42 @@ public class AdoptionApplicationService {
     private final AdoptionApplicationRepository adoptionRepository;
     private final UserRepository userRepository;
     private final AnimalRepository animalRepository;
+    private final EmailService emailService; // 💬 Inject EmailService here
 
     @Autowired
     public AdoptionApplicationService(
             AdoptionApplicationRepository adoptionRepository,
             UserRepository userRepository,
-            AnimalRepository animalRepository) {
+            AnimalRepository animalRepository,
+            EmailService emailService
+    ) {
         this.adoptionRepository = adoptionRepository;
         this.userRepository = userRepository;
         this.animalRepository = animalRepository;
+        this.emailService = emailService;
     }
 
     public AdoptionApplication createApplication(Long animalId, String userEmail) {
-        // Find the user by email
         Optional<User> userOpt = userRepository.findByEmail(userEmail);
-        // Find the animal by id
         Optional<Animal> animalOpt = animalRepository.findById(animalId);
 
         if (userOpt.isPresent() && animalOpt.isPresent()) {
             User user = userOpt.get();
             Animal animal = animalOpt.get();
 
-            // Check if application already exists
             if (adoptionRepository.existsByAnimalAndUser(animal, user)) {
                 throw new RuntimeException("You have already applied to adopt this animal");
             }
 
-            // Check if animal is available for adoption
             if (!"Available".equals(animal.getStatus())) {
                 throw new RuntimeException("This animal is not available for adoption");
             }
 
-            // Create new application
             AdoptionApplication application = new AdoptionApplication(animal, user);
 
-            // Update animal status
             animal.setStatus("Application Pending");
             animalRepository.save(animal);
 
-            // Save and return application
             return adoptionRepository.save(application);
         } else {
             throw new RuntimeException("User or animal not found");
@@ -93,15 +90,29 @@ public class AdoptionApplicationService {
             AdoptionApplication application = applicationOpt.get();
             application.setStatus(newStatus);
 
-            // If approved, update animal status
+            Animal animal = application.getAnimal();
+
             if ("Approved".equals(newStatus)) {
-                Animal animal = application.getAnimal();
                 animal.setStatus("Adopted");
                 animalRepository.save(animal);
+
+                // ✅ Send approval email
+                emailService.sendEmail(
+                        application.getUser().getEmail(),
+                        "Adoption Application Approved",
+                        "Congratulations! Your application to adopt " + animal.getName() + " has been approved."
+                );
+
             } else if ("Rejected".equals(newStatus)) {
-                Animal animal = application.getAnimal();
                 animal.setStatus("Available");
                 animalRepository.save(animal);
+
+                // ✅ Send rejection email
+                emailService.sendEmail(
+                        application.getUser().getEmail(),
+                        "Adoption Application Rejected",
+                        "We are sorry. Your application to adopt " + animal.getName() + " has been rejected."
+                );
             }
 
             return adoptionRepository.save(application);
