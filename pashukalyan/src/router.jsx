@@ -7,6 +7,7 @@ import Login from "./pages/Login";
 import Donate from "./pages/Donate";
 import Register from "./pages/Register";
 import AdminDashboard from "./pages/AdminDashboard";
+import Checkout from "./pages/Checkout";
 
 const router = createBrowserRouter([
   { path: "/", element: <Home /> },
@@ -16,7 +17,10 @@ const router = createBrowserRouter([
   { path: "/login", element: <Login /> },
   { path: "/donate", element: <Donate /> },
   { path: "/register", element: <Register /> },
-  { path: "/admin", element: <AdminDashboard />}
+  { path: "/admin", element: <AdminDashboard />},
+  { path: "/checkout", element: <Checkout />}
+
+
 ]);
 
 export default router;

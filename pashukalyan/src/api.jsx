@@ -1,5 +1,8 @@
 import axios from "axios";
 
+
+const API_URL = "/api/payment/esewa";
+
 const API = axios.create({
   baseURL: "http://localhost:8080/api", // Your backend URL
   withCredentials: true, // Important for session management (sends cookies)
@@ -29,31 +32,39 @@ export const logoutUser = async () => {
   try {
     // Call the backend logout endpoint
     const response = await API.post("/logout");
-    
-    // Also clear localStorage and any client-side data
+
+    // Clear client-side storage
     localStorage.removeItem("userSession");
+    localStorage.removeItem("donationCart");
     sessionStorage.removeItem("userSession");
-    
-    // Force clear cookies on the client side as well
-    document.cookie.split(";").forEach(function(c) {
-      document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+
+    // Clear cookies
+    document.cookie.split(";").forEach((c) => {
+      document.cookie = c
+        .replace(/^ +/, "")
+        .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
     });
-    
+
     console.log("Logout completed, cookies and storage cleared");
-    return response.data; // "User logged out successfully!"
+    return response.data; // e.g., "User logged out successfully!"
   } catch (error) {
     console.error("Logout error:", error);
-    
-    // Even if the API call fails, still try to clear client-side data
+
+    // Even if API call fails, clear client-side data
     localStorage.removeItem("userSession");
+    localStorage.removeItem("donationCart");
     sessionStorage.removeItem("userSession");
-    document.cookie.split(";").forEach(c => {
-      document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+
+    document.cookie.split(";").forEach((c) => {
+      document.cookie = c
+        .replace(/^ +/, "")
+        .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
     });
-    
+
     throw error.response?.data || "Logout failed!";
   }
 };
+
 
 // ---------- ANIMAL APIs ----------
 
@@ -178,7 +189,36 @@ export const deleteFood = async (id) => {
   }
 };
 
+//esewa part
 
+
+
+
+// ESewa API service
+export const esewaApi = {
+  // Initiate payment
+  initiatePayment: async (cartData) => {
+    try {
+      // Use your API instance instead of axios directly
+      const response = await API.post("/payment/esewa/initiate", cartData);
+      return response.data;
+    } catch (error) {
+      console.error("ESewa payment initiation error:", error);
+      throw error.response?.data || { success: false, message: "Failed to initiate payment" };
+    }
+  },
+  
+  // Verify payment
+  verifyPayment: async (transactionUuid) => {
+    try {
+      const response = await API.get(`/payment/esewa/verify/${transactionUuid}`);
+      return response.data;
+    } catch (error) {
+      console.error("ESewa payment verification error:", error);
+      throw error.response?.data || { success: false, message: "Failed to verify payment" };
+    }
+  }
+};
 
 
 export default API;

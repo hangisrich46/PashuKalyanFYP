@@ -9,6 +9,9 @@ import Register from "./pages/Register";
 import AdminDashboard from "./pages/AdminDashboard";
 import API from "./api"; // Import your API
 import AboutUs from "./pages/About";
+import Donate from "./pages/Donate";
+import Checkout from "./pages/Checkout";
+import PaymentSuccess from "./pages/PaymentSuccess";
 
 function App() {
   // Add session checking logic
@@ -52,6 +55,12 @@ function App() {
             <Route path="/register" element={<Register />} />
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/about" element={<AboutUs />} />
+            <Route path="/donate" element={<Donate />} />
+            <Route path="/checkout" element={<Checkout />} />
+            <Route path="/checkout/success" element={<PaymentSuccess />} />
+
+
+            
           </Routes>
         </main>
         <Footer />
