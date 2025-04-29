@@ -8,6 +8,7 @@ import { fetchAllAnimals, fetchAllFood, addFood, deleteFood,deleteAnimal, update
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import API from '../api'; // 
+import  BlogAdmin from "../components/BlogAdmin";
 
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
@@ -707,6 +708,8 @@ const renderApplications = () => (
         return renderApplications();
       case "food":
         return renderFood();
+        case "blog":
+      return <BlogAdmin />;
       default:
         return renderDashboard();
     }
@@ -838,6 +841,27 @@ const renderApplications = () => (
     <line x1="14" y1="1" x2="14" y2="4"></line>
   </svg>
   Food
+</div>
+<div
+  className={`nav-item ${activeTab === "blog" ? "active-nav-item" : ""}`}
+  onClick={() => setActiveTab("blog")}
+>
+  <svg
+    className="nav-icon"
+    xmlns="http://www.w3.org/2000/svg"
+    width="20"
+    height="20"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M12 20h9"></path>
+    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+  </svg>
+  Blog
 </div>
 
         <div className="nav-item logout-item">

@@ -14,6 +14,7 @@ import Checkout from "./pages/Checkout";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import { ToastContainer } from 'react-toastify'; // Import ToastContainer
 import 'react-toastify/dist/ReactToastify.css'; // Import react-toastify styles
+import Blog from "./pages/Blog";
 
 function App() {
   // Add session checking logic
@@ -60,6 +61,9 @@ function App() {
             <Route path="/donate" element={<Donate />} />
             <Route path="/checkout" element={<Checkout />} />
             <Route path="/checkout/success" element={<PaymentSuccess />} />
+            <Route path="/blog" element={<Blog />} />
+            <Route path="/admin/blog" element={<BlogAdmin />} />
+
           </Routes>
         </main>
         <Footer />

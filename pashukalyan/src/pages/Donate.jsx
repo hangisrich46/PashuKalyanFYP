@@ -23,6 +23,12 @@ const Donate = () => {
   const [quantities, setQuantities] = useState({})
   // State for loading
   const [isLoading, setIsLoading] = useState(true)
+  // State for search query
+  const [searchQuery, setSearchQuery] = useState("")
+  // State for search results
+  const [searchResults, setSearchResults] = useState([])
+  // State to track if search is active
+  const [isSearchActive, setIsSearchActive] = useState(false)
 
   // Fetch user session and food items data when component mounts
   useEffect(() => {
@@ -50,6 +56,7 @@ const Donate = () => {
   
     getUserSession()
   }, [])
+  
   // Load saved cart from localStorage when component mounts
   useEffect(() => {
     const savedCartData = localStorage.getItem("donationCart");
@@ -88,6 +95,7 @@ const Donate = () => {
       localStorage.removeItem("donationCart");
     }
   }, [cart, userSession]);
+  
   useEffect(() => {
     const getFoodItems = async () => {
       setIsLoading(true)
@@ -187,6 +195,63 @@ const Donate = () => {
     getFoodItems()
   }, [])
 
+  // Handle search food items
+  const searchFoodItems = async (query) => {
+    if (!query.trim()) {
+      setIsSearchActive(false)
+      return
+    }
+    
+    setIsLoading(true)
+    try {
+      // Make API call to search endpoint
+      const response = await fetch(`http://localhost:8080/api/food/search?name=${encodeURIComponent(query)}`)
+      const data = await response.json()
+      
+      if (data.success && data.data) {
+        const items = data.data.map((item) => ({
+          id: item.id,
+          name: item.name,
+          description: item.description,
+          price: item.price,
+          imageUrl: item.imageUrl ? `http://localhost:8080${item.imageUrl}` : "/placeholder.svg?height=200&width=300",
+        }))
+        
+        // Initialize quantities for search results
+        const searchQuantities = {}
+        items.forEach((item) => {
+          // Use existing quantity if available, otherwise set to 1
+          searchQuantities[item.id] = quantities[item.id] || 1
+        })
+        
+        setQuantities(prev => ({...prev, ...searchQuantities}))
+        setSearchResults(items)
+        setIsSearchActive(true)
+      } else {
+        setSearchResults([])
+        setIsSearchActive(true)
+      }
+    } catch (error) {
+      console.error("Failed to search food items:", error)
+      setSearchResults([])
+      setIsSearchActive(true)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // Handle search form submission
+  const handleSearchSubmit = (e) => {
+    e.preventDefault()
+    searchFoodItems(searchQuery)
+  }
+
+  // Clear search and show all items
+  const clearSearch = () => {
+    setSearchQuery("")
+    setIsSearchActive(false)
+  }
+
   // Handle quantity change
   const handleQuantityChange = (id, value) => {
     // Ensure quantity is at least 1
@@ -258,6 +323,9 @@ const Donate = () => {
     navigate("/checkout");
   }
 
+  // Decide which items to display based on search state
+  const displayItems = isSearchActive ? searchResults : foodItems
+
   return (
     <div className="bg-[#f5f5f5] min-h-screen py-8 px-4">
       <div className="container mx-auto">
@@ -290,15 +358,60 @@ const Donate = () => {
               <span className="font-medium">Donation Cart: Rs {cartTotal}</span>
             </div>
             {cart.length > 0 && (
-  <button
-    className="mt-2 w-full bg-black text-white py-2 rounded-md hover:bg-gray-800 transition-colors"
-    onClick={handleCheckout}
-  >
-    Proceed to Checkout
-  </button>
-)}
-          
+              <button
+                className="mt-2 w-full bg-black text-white py-2 rounded-md hover:bg-gray-800 transition-colors"
+                onClick={handleCheckout}
+              >
+                Proceed to Checkout
+              </button>
+            )}
           </div>
+        </div>
+
+        {/* Search Bar */}
+        <div className="mb-8">
+          <form onSubmit={handleSearchSubmit} className="flex flex-col sm:flex-row gap-2">
+            <div className="relative flex-grow">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search for food items..."
+                className="w-full py-3 px-4 pr-10 rounded-md border border-[#e0e0e0] focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
+              />
+              {searchQuery && (
+                <button 
+                  type="button"
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-10 top-1/2 transform -translate-y-1/2 text-[#757575] hover:text-black"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                  </svg>
+                </button>
+              )}
+            </div>
+            <button 
+              type="submit"
+              className="bg-black text-white py-3 px-6 rounded-md hover:bg-gray-800 transition-colors flex items-center justify-center sm:w-auto"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+              Search
+            </button>
+            {isSearchActive && (
+              <button 
+                type="button"
+                onClick={clearSearch}
+                className="bg-[#e0e0e0] text-black py-3 px-6 rounded-md hover:bg-[#d0d0d0] transition-colors flex items-center justify-center sm:w-auto"
+              >
+                Show All
+              </button>
+            )}
+          </form>
         </div>
 
         {/* Messages */}
@@ -321,8 +434,8 @@ const Donate = () => {
         ) : (
           /* Food Items Grid */
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {foodItems.length > 0 ? (
-              foodItems.map((item) => (
+            {displayItems.length > 0 ? (
+              displayItems.map((item) => (
                 <div key={item.id} className="bg-white rounded-lg shadow-md overflow-hidden">
                   <img src={item.imageUrl} alt={item.name} className="w-full h-48 object-cover" />
                   <div className="p-4">
@@ -387,7 +500,19 @@ const Donate = () => {
               ))
             ) : (
               <div className="text-center py-12 col-span-3">
-                <p className="text-[#757575] text-lg">No food items available for donation yet.</p>
+                {isSearchActive ? (
+                  <div>
+                    <p className="text-[#757575] text-lg">No food items match your search criteria.</p>
+                    <button 
+                      className="mt-4 bg-[#e0e0e0] text-black py-2 px-4 rounded-md hover:bg-[#d0d0d0] transition-colors"
+                      onClick={clearSearch}
+                    >
+                      Show All Items
+                    </button>
+                  </div>
+                ) : (
+                  <p className="text-[#757575] text-lg">No food items available for donation yet.</p>
+                )}
               </div>
             )}
           </div>

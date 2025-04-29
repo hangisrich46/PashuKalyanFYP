@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 
 import jakarta.servlet.http.HttpSession;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -33,13 +34,19 @@ public class UserController {
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody User user) {
         try {
-            // Call the register method in the service to register the user
             User savedUser = userService.register(user);
-            return ResponseEntity.ok().body("User registered successfully!");
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body("Registration failed: " + e.getMessage());
+            return ResponseEntity.ok().body(Map.of("message", "User registered successfully!"));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity
+                    .status(HttpStatus.CONFLICT)  // 409 Conflict for duplicate
+                    .body(Map.of("message", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("message", "Something went wrong"));
         }
     }
+
 
     @GetMapping("/users")
     public ResponseEntity<List<User>> getAllUsers() {
